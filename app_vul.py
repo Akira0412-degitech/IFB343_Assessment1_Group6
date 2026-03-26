@@ -246,16 +246,21 @@ def login():
 
         db = get_db()
 
-        # ❌ VULNERABLE: string concatenation — username injected into SQL syntax
-        query = (
-            "SELECT * FROM users "
-            "WHERE username = '" + username + "' "
-            "AND password_hash = '" + pw_hash + "'"
-        )
+        # # ❌ VULNERABLE: string concatenation — username injected into SQL syntax
+        # query = (
+        #     "SELECT * FROM users "
+        #     "WHERE username = '" + username + "' "
+        #     "AND password_hash = '" + pw_hash + "'"
+        # )
+
+        #Corrected SQL query with parameterised input to prevent SQL Injection:
+        query = "SELECT * FROM users where username = ? AND password_hash = ?"
         try:
-            user = db.execute(query).fetchone()
+            user = db.execute(query, (username, pw_hash)).fetchone()
         except Exception as e:
-            flash(f'Database error: {e}', 'danger')
+            # flash(f'Database error: {e}', 'danger')
+            #Avoide leaking database errors to the user, as they can provide clues for further attacks. Instead, log the error internally and show a generic message to the user.
+            flash("An unexpected error occurred. Please try again.", 'danger')
             return render_template('login.html', form=form)
 
         if user:
